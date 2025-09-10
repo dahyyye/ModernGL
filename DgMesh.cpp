@@ -613,3 +613,4 @@ GLuint load_shaders(const char* vertexPath, const char* fragmentPath)
 	return programID;
 }
 
+//누리 수정
