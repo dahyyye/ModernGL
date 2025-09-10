@@ -13,7 +13,7 @@ int main(int argc, char **argv)
         std::cerr << "Failed to initialize GLFW" << std::endl;
         return 1;
     }
-    //dlsfjlajeifldskjf
+    
     // GLEW ÃÊ±âÈ­
     glewExperimental = GL_TRUE;
     if (glewInit() != GLEW_OK) 
