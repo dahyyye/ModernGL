@@ -41,7 +41,7 @@ int main(int argc, char **argv)
 
     //[추가]
     scene.initSdfPass();
-
+    /*
     // 메쉬를 임포트하여 장면에 추가
     DgMesh *pMesh1 = ::import_mesh_obj(".\\model\\bunny_8327v.obj");
     scene.mMeshList.push_back(pMesh1);
@@ -54,7 +54,7 @@ int main(int argc, char **argv)
     pMesh2->mName = "Camel";
     pMesh2->computeNormal(0);
     pMesh2->mShaderId = scene.mShaders[2];*/
-    
+    */
     // 메인 루프 진입
     while (!glfwWindowShouldClose(ImGuiManager::instance().mWindow))
     {
