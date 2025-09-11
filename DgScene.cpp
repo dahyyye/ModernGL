@@ -117,6 +117,9 @@ void DgScene::showWindow()
 	// Context 팝업 메뉴를 렌더링
 	renderContextPopup();
 
+	//[추가]
+	renderSdfControls();
+
 	ImGui::End();
 }
 
@@ -216,6 +219,13 @@ void DgScene::renderScene()
 		viewMat = viewMat * mRotMat;                                             // 회전 변환, M = I * T * R
 		viewMat = glm::translate(viewMat, glm::vec3(mPan[0], mPan[1], mPan[2]));   // Pan 변환, M = I * T * R * Pan
 
+		//[추가] 
+		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LESS);
+		glDepthMask(GL_TRUE);
+		drawSdfPass(viewMat, projMat);
+
+
 		// 바닥 렌더링
 		{
 			// 모델링 변환 행렬(단위 행렬)
@@ -233,6 +243,8 @@ void DgScene::renderScene()
 			glBindVertexArray(0);
 			glUseProgram(0);
 		}
+		//[추가]
+		glDepthMask(GL_TRUE);
 
 		// 모델 렌더링
 		for (DgMesh* pMesh : mMeshList)
@@ -407,3 +419,78 @@ void DgScene::renderContextPopup()
 }
 
 
+
+//[추가] 
+void DgScene::initSdfPass()
+{
+	if (mSdfInit) return;
+
+	mSdfProg = load_shaders(".\\shaders\\fullscreen.vert", ".\\shaders\\sdf_raymarch.frag");
+
+	glGenVertexArrays(1, &mSdfVAO); // gl_VertexID만 쓰므로 VAO만 있으면 됨
+	mSdfInit = true;
+}
+void DgScene::renderSdfControls()
+{
+	ImGui::Begin("SDF Controls");
+
+	ImGui::Text("SDF Shape");
+	if (ImGui::RadioButton("Sphere", mSdfShape == 0)) mSdfShape = 0;
+	if (ImGui::RadioButton("Cube", mSdfShape == 1)) mSdfShape = 1;
+	if (ImGui::RadioButton("Torus", mSdfShape == 2)) mSdfShape = 2;
+
+	ImGui::Separator();
+	ImGui::DragFloat3("Move", &mSdfMove.x, 0.01f);
+	if (mSdfShape == 0) {
+		ImGui::DragFloat("Sphere R", &mSdfSphereR, 0.01f, 0.01f, 100.0f);
+	}
+	if (mSdfShape == 1) {
+		ImGui::DragFloat3("Cube (x,y,z)", &mSdfBoxB.x, 0.01f, 0.01f, 100.0f);
+	}
+	if (mSdfShape == 2) {
+		ImGui::DragFloat2("Torus (R, r)", &mSdfTorus.x, 0.01f, 0.01f, 100.0f);
+	}
+
+	ImGui::End();
+}
+
+void DgScene::drawSdfPass(const glm::mat4& view, const glm::mat4& proj)
+{
+	if (mSdfProg == 0) initSdfPass();
+
+	GLboolean wasCull = glIsEnabled(GL_CULL_FACE);
+	if (wasCull) glDisable(GL_CULL_FACE);   // 풀스크린 삼각형 컬링 방지
+
+	glUseProgram(mSdfProg);
+	glBindVertexArray(mSdfVAO);
+
+	// 행렬 및 역행렬
+	glm::mat4 invV = glm::inverse(view);
+	glm::mat4 invP = glm::inverse(proj);
+	glUniformMatrix4fv(glGetUniformLocation(mSdfProg, "uView"), 1, GL_FALSE, glm::value_ptr(view));
+	glUniformMatrix4fv(glGetUniformLocation(mSdfProg, "uProj"), 1, GL_FALSE, glm::value_ptr(proj));
+	glUniformMatrix4fv(glGetUniformLocation(mSdfProg, "uInvView"), 1, GL_FALSE, glm::value_ptr(invV));
+	glUniformMatrix4fv(glGetUniformLocation(mSdfProg, "uInvProj"), 1, GL_FALSE, glm::value_ptr(invP));
+
+	// 화면 사이즈
+	glUniform2f(glGetUniformLocation(mSdfProg, "uResolution"), mSceneSize.x, mSceneSize.y);
+
+	// SDF 파라미터
+	glUniform1i(glGetUniformLocation(mSdfProg, "uShape"), mSdfShape);
+	glUniform3f(glGetUniformLocation(mSdfProg, "uMove"), mSdfMove.x, mSdfMove.y, mSdfMove.z);
+	glUniform1f(glGetUniformLocation(mSdfProg, "uSphereR"), mSdfSphereR);
+	glUniform3f(glGetUniformLocation(mSdfProg, "uBoxB"), mSdfBoxB.x, mSdfBoxB.y, mSdfBoxB.z);
+	glUniform2f(glGetUniformLocation(mSdfProg, "uTorus"), mSdfTorus.x, mSdfTorus.y);
+
+	// 깊이: 먼저 SDF가 채움
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
+	glDepthMask(GL_TRUE);
+
+	glDrawArrays(GL_TRIANGLES, 0, 3);
+
+	glBindVertexArray(0);
+	glUseProgram(0);
+
+	if (wasCull) glEnable(GL_CULL_FACE);
+}
