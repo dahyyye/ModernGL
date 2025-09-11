@@ -39,6 +39,9 @@ int main(int argc, char **argv)
     // 바닥 평면 메쉬를 생성
     scene.createGroundMesh();
 
+    //[추가]
+    scene.initSdfPass();
+
     // 메쉬를 임포트하여 장면에 추가
     DgMesh *pMesh1 = ::import_mesh_obj(".\\model\\bunny_8327v.obj");
     scene.mMeshList.push_back(pMesh1);
