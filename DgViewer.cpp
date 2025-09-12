@@ -54,7 +54,7 @@ int main(int argc, char **argv)
     pMesh2->mName = "Camel";
     pMesh2->computeNormal(0);
     pMesh2->mShaderId = scene.mShaders[2];*/
-    */
+    
     // 메인 루프 진입
     while (!glfwWindowShouldClose(ImGuiManager::instance().mWindow))
     {
