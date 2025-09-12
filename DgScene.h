@@ -19,7 +19,22 @@ public:
 	ImVec2 mStartPos;
 	glm::mat4 mRotMat;
 	glm::vec3 mPan;
+	// =========================
+	// [추가]
+	// SDF 
+	int       mSdfShape;      // 0=Sphere, 1=Box, 2=Torus
+	glm::vec3 mSdfMove;
+	float     mSdfSphereR;
+	glm::vec3 mSdfBoxB;
+	glm::vec2 mSdfTorus;
 
+	GLuint mSdfProg;
+	GLuint mSdfVAO;
+	bool   mSdfInit;
+
+	void initSdfPass();
+	void drawSdfPass(const glm::mat4& view, const glm::mat4& proj);
+	// =========================
 private:
 	DgScene()
 	{
@@ -28,6 +43,13 @@ private:
 		mStartPos = ImVec2(0.0f, 0.0f);
 		mRotMat = glm::mat4(1.0f);
 		mPan = glm::vec3(0.0f);
+		// [추가]
+		mSdfShape = 0;                          // Sphere
+		mSdfMove = glm::vec3(0.0f, 0.0f, 0.0f);
+		mSdfSphereR = 0.8f;
+		mSdfBoxB = glm::vec3(0.4f, 0.5f, 0.3f); // half-size
+		mSdfTorus = glm::vec2(0.8f, 0.25f);     // (R, r)
+		// =========================
 	}
 	~DgScene()
 	{
@@ -70,4 +92,7 @@ public:
 	void renderContextPopup();
 	void processMouseEvent();
 	void processKeyboardEvent();
+
+	//[추가]
+	void renderSdfControls();
 };
