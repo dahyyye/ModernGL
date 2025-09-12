@@ -216,6 +216,13 @@ void DgScene::renderScene()
 		viewMat = viewMat * mRotMat;                                             // 회전 변환, M = I * T * R
 		viewMat = glm::translate(viewMat, glm::vec3(mPan[0], mPan[1], mPan[2]));   // Pan 변환, M = I * T * R * Pan
 
+		//[추가] 
+		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LESS);
+		glDepthMask(GL_TRUE);
+		drawSdfPass(viewMat, projMat);
+		//===========
+
 		// 바닥 렌더링
 		{
 			// 모델링 변환 행렬(단위 행렬)
@@ -226,13 +233,26 @@ void DgScene::renderScene()
 			glUniformMatrix4fv(glGetUniformLocation(mShaders[0], "uModel"), 1, GL_FALSE, glm::value_ptr(modelMat));
 			glUniformMatrix4fv(glGetUniformLocation(mShaders[0], "uView"), 1, GL_FALSE, glm::value_ptr(viewMat));
 			glUniformMatrix4fv(glGetUniformLocation(mShaders[0], "uProjection"), 1, GL_FALSE, glm::value_ptr(projMat));
+			
 
+			//[추가]
+			GLint colLoc = glGetUniformLocation(mShaders[0], "uColor");
+			if (colLoc >= 0) glUniform3f(colLoc, 0.25f, 0.28f, 0.32f);
+
+			glLineWidth(1.5f);
+
+			// =========================
+			// 
 			// 바닥 평면 그리기
 			glBindVertexArray(mGroundVAO);
 			glDrawArrays(GL_LINES, 0, mGroundVerts.size() / 3);
 			glBindVertexArray(0);
 			glUseProgram(0);
 		}
+
+		//[추가]
+		glDepthMask(GL_TRUE);
+		//============
 
 		// 모델 렌더링
 		for (DgMesh* pMesh : mMeshList)
